@@ -82,7 +82,7 @@ class RunnerConfig(object):
                  resource_profiling_memory_poll_interval=0.25, resource_profiling_pid_poll_interval=0.25,
                  resource_profiling_results_dir=None,
                  tags=None, skip_tags=None, fact_cache_type='jsonfile', fact_cache=None, ssh_key=None,
-                 project_dir=None, directory_isolation_base_path=None, envvars=None, forks=None, cmdline=None, omit_event_data=False,
+                 project_dir=None, directory_isolation_base_path=None, envvars=None, passwords=None, forks=None, cmdline=None, omit_event_data=False,
                  only_failed_event_data=False):
         self.private_data_dir = os.path.abspath(private_data_dir)
         self.ident = str(ident)
@@ -137,6 +137,7 @@ class RunnerConfig(object):
         self.ssh_key_data = ssh_key
         self.execution_mode = ExecutionMode.NONE
         self.envvars = envvars
+        self.passwords = passwords
         self.forks = forks
         self.cmdline_args = cmdline
         self.omit_event_data = omit_event_data
@@ -255,15 +256,20 @@ class RunnerConfig(object):
         Manages reading environment metadata files under ``private_data_dir`` and merging/updating
         with existing values so the :py:class:`ansible_runner.runner.Runner` object can read and use them easily
         """
+        self.expect_passwords = dict()
+        if self.passwords and isinstance(self.passwords, dict):
+            if six.PY2:
+                self.expect_passwords.update({k.decode('utf-8'):v.decode('utf-8') for k, v in self.passwords.items()})
+            else:
+                self.expect_passwords.update({k: v for k, v in self.passwords.items()})
         try:
             passwords = self.loader.load_file('env/passwords', Mapping)
-            self.expect_passwords = {
+            self.expect_passwords.update({
                 re.compile(pattern, re.M): password
                 for pattern, password in iteritems(passwords)
-            }
+            })
         except ConfigurationError:
             output.debug('Not loading passwords')
-            self.expect_passwords = dict()
         self.expect_passwords[pexpect.TIMEOUT] = None
         self.expect_passwords[pexpect.EOF] = None
 
