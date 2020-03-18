@@ -191,7 +191,7 @@ def dump_artifacts(kwargs):
             if not os.path.exists(obj):
                 kwargs['inventory'] = dump_artifact(obj, path, 'hosts')
 
-    for key in ('envvars', 'extravars', 'passwords', 'settings'):
+    for key in ('envvars', 'extravars', 'settings'):
         obj = kwargs.get(key)
         if obj and not os.path.exists(os.path.join(private_data_dir, 'env', key)):
             path = os.path.join(private_data_dir, 'env')
